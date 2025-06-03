@@ -604,21 +604,21 @@ func createTableGrantQueries(gp v1alpha1.GrantParameters, ql *[]xsql.Query, ro s
 		return errors.Errorf(errInvalidParams, v1alpha1.RoleTable)
 	}
 
-	tb := strings.Join(prefixAndQuote(*gp.Schema, gp.Tables), ",")
+	tg := tableTarget(gp)
 	sp := strings.Join(gp.Privileges.ToStringSlice(), ",")
 
 	*ql = append(*ql,
 		// REVOKE ANY MATCHING EXISTING PERMISSIONS
-		xsql.Query{String: fmt.Sprintf("REVOKE %s ON TABLE %s FROM %s",
+		xsql.Query{String: fmt.Sprintf("REVOKE %s ON %s FROM %s",
 			sp,
-			tb,
+			tg,
 			ro,
 		)},
 
 		// GRANT REQUESTED PERMISSIONS
-		xsql.Query{String: fmt.Sprintf("GRANT %s ON TABLE %s TO %s %s",
+		xsql.Query{String: fmt.Sprintf("GRANT %s ON %s TO %s %s",
 			sp,
-			tb,
+			tg,
 			ro,
 			withOption(gp.WithOption),
 		)},
@@ -792,9 +792,9 @@ func deleteGrantQuery(gp v1alpha1.GrantParameters, q *xsql.Query) error { // nol
 		)
 		return nil
 	case v1alpha1.RoleTable:
-		q.String = fmt.Sprintf("REVOKE %s ON TABLE %s FROM %s",
+		q.String = fmt.Sprintf("REVOKE %s ON %s FROM %s",
 			strings.Join(gp.Privileges.ToStringSlice(), ","),
-			strings.Join(prefixAndQuote(*gp.Schema, gp.Tables), ","),
+			tableTarget(gp),
 			ro,
 		)
 		return nil
@@ -866,6 +866,14 @@ func prefixAndQuote(sc string, obj []string) []string {
 		ret[i] = qsc + "." + pq.QuoteIdentifier(v)
 	}
 	return ret
+}
+
+func tableTarget(gp v1alpha1.GrantParameters) string {
+	if gp.AllTables {
+		return "ALL TABLES"
+	}
+
+	return fmt.Sprintf("%s %s", "TABLE", strings.Join(prefixAndQuote(*gp.Schema, gp.Tables), ","))
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {

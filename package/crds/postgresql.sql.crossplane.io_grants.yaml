@@ -83,6 +83,9 @@ spec:
                 description: GrantParameters define the desired state of a PostgreSQL
                   grant instance.
                 properties:
+                  allTables:
+                    description: The tables upon which to grant the privileges.
+                    type: boolean
                   columns:
                     description: The columns upon which to grant the privileges.
                     items:

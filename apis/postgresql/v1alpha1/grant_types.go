@@ -101,7 +101,7 @@ func (gp *GrantParameters) filledInFields() *stringSet {
 		"MemberOf":            gp.MemberOf != nil,
 		"Database":            gp.Database != nil,
 		"Schema":              gp.Schema != nil,
-		"Tables":              len(gp.Tables) > 0,
+		"Tables":              len(gp.Tables) > 0 || gp.AllTables,
 		"Columns":             len(gp.Columns) > 0,
 		"Sequences":           len(gp.Sequences) > 0,
 		"Routines":            len(gp.Routines) > 0,
@@ -340,6 +340,10 @@ type GrantParameters struct {
 	// The tables upon which to grant the privileges.
 	// +optional
 	Tables []string `json:"tables,omitempty"`
+
+	// The tables upon which to grant the privileges.
+	// +optional
+	AllTables bool `json:"allTables,omitempty"`
 
 	// The sequences upon which to grant the privileges.
 	// +optional
